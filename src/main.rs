@@ -1,10 +1,22 @@
 use std::marker::PhantomData;
 
 use bevy::{
-    ecs::system::SystemParamItem,
+    ecs::system::StaticSystemParam,
     prelude::*,
     render::{render_resource::AsBindGroup, Render, RenderApp},
 };
+
+#[derive(AsBindGroup, TypePath, Debug, Clone, Default, Asset)]
+pub struct MyMaterial {
+    #[uniform(0)]
+    a_number: f32,
+    #[uniform(0)]
+    _padding: Vec3,
+}
+
+pub trait SomeMaterial: AsBindGroup + Asset + Clone + Sized {}
+
+impl SomeMaterial for MyMaterial {}
 
 fn main() {
     App::new()
@@ -35,21 +47,9 @@ where
     }
 }
 
-#[derive(AsBindGroup, TypePath, Debug, Clone, Default, Asset)]
-pub struct MyMaterial {
-    #[uniform(0)]
-    a_number: f32,
-    #[uniform(0)]
-    _padding: Vec3,
-}
-
-impl SomeMaterial for MyMaterial {}
-
-fn foo<M: SomeMaterial>(material: &M, mut param: SystemParamItem<<M::AsBindGroup>::Param>) {
+fn foo<M: SomeMaterial>(_material: &M, _param: StaticSystemParam<M::Param>) {
     // SystemParam now required to call the default implementation of as_bind_group e.g.
     // let Ok(bg) = material.as_bind_group(&layout, render_device, param) else {
     //     return;
     // };
 }
-
-pub trait SomeMaterial: AsBindGroup + Asset + Clone + Sized {}
